@@ -7,6 +7,8 @@ class SQLiteOperator:
         self.connection = sqlite3.connect(self.database_name)
         self.cursor = self.connection.cursor()
         self.table_info = self.get_table_info()
+        # 初始化缓冲区
+        self.insert_buffer = []
     
     # 使用上下文管理器时以下操作有效，只处理提交、回滚事务，不处理关闭数据库事务
     def __enter__(self) -> None:
@@ -146,3 +148,17 @@ class SQLiteOperator:
             placeholders = ', '.join(['?' for _ in column_names])
             query = f"INSERT INTO {self.table_name} ({', '.join(column_names)}) VALUES ({placeholders})"
             self.cursor.executemany(query, row_values)
+
+    # 可以执行多个插入语句
+    # 将插入操作添加到缓冲区
+    def buffer_insert(self, column_names: tuple, column_values: tuple) -> None:
+        self.insert_buffer.append((column_names, column_values))
+    
+    # 执行缓冲区中的所有插入操作并提交
+    def execute_buffered_inserts(self):
+        with self.connection:
+            for column_names, column_values in self.insert_buffer:
+                placeholders = ', '.join(['?' for _ in column_values])
+                query = f"INSERT INTO {self.table_name} ({', '.join(column_names)}) VALUES ({placeholders})"
+                self.cursor.execute(query, column_values)
+            self.insert_buffer = []  # 清空缓冲区   
