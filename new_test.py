@@ -81,6 +81,3 @@ class SQLiteOperator:
         self.disconnect()
 
 # The above code provides the core functionalities. You can further expand the class with more specific methods.
-db = SQLiteOperator("local.db", "personel_info")
-print(db.get_table_info())
-print(db.get_column_names())
