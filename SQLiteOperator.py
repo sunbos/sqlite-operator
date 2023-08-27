@@ -2,8 +2,27 @@ import sqlite3
 import uuid
 
 class SQLiteOperator:
+    """
+    用于与 SQLite 数据库交互的类。
+
+    属性:
+        database_name (str): SQLite 数据库的名称。
+        table_name (str): 数据库中的表名称。
+        connection (sqlite3.Connection): 数据库连接。
+        cursor (sqlite3.Cursor): 执行查询的游标。
+        table_info (list): 表列的信息。
+        insert_buffer (list): 批量插入的缓冲区。
+        buffer_limit (int): 插入缓冲区的最大记录数。
+    """
 
     def __init__(self, database_name, table_name) -> None:
+        """
+        初始化 SQLiteOperator。
+
+        参数:
+            database_name (str): SQLite 数据库的名称。
+            table_name (str): 数据库中的表名称。
+        """
         self.database_name = database_name
         self.table_name = table_name
         self.connection = None
@@ -12,7 +31,7 @@ class SQLiteOperator:
         self.insert_buffer = []
         self.buffer_limit = 100
 
-    def __enter__(self) -> None:
+    def __enter__(self) -> 'SQLiteOperator':
         """
         上下文管理器的入口点。连接到数据库并创建游标。
         """
@@ -53,7 +72,7 @@ class SQLiteOperator:
         执行带有错误处理的查询。
 
         参数:
-            query (str): 要执行的SQL查询。
+            query (str): 要执行的 SQL 查询。
             params (tuple): 查询中要使用的参数。
 
         异常:
@@ -66,3 +85,12 @@ class SQLiteOperator:
                 self.cursor.execute(query)
         except sqlite3.Error as e:
             print(f"数据库错误: {e}")
+
+    def clear_database_table(self):
+        """
+        清除表中的数据内容。
+        """
+        sql_script = f"DELETE FROM {self.table_name}; VACUUM;"
+        self.connection = sqlite3.connect(self.database_name)
+        self.connection.executescript(sql_script)
+        self.disconnect()
