@@ -94,3 +94,34 @@ class SQLiteOperator:
         self.connection = sqlite3.connect(self.database_name)
         self.connection.executescript(sql_script)
         self.disconnect()
+
+    def get_table_info(self) -> list:
+        """
+        获取表的所有列信息。
+
+        返回值:
+            list: 包含列信息的列表，每个元素是一个包含列属性的元组。
+        """
+        if not self.table_info:
+            self.connect()
+            self.execute_with_handling(f"SELECT * FROM pragma_table_info('{self.table_name}');")
+            self.table_info = self.cursor.fetchall()               
+            self.disconnect()
+        return self.table_info
+
+    def get_table_column_info(self, info_index: int = None) -> dict:
+        """
+        获取具体表信息中行信息的数据：cid、name、type、notnull、dflt_value、pk。
+        
+        参数:
+            info_index (int): 要获取的特定信息的索引。
+
+        返回值:
+            dict: 包含列信息的字典，其中列名作为键，指定的信息作为值。
+        """
+        if info_index is None:
+            raise TypeError("在调用 SQLiteOperator.get_table_column_info() 时缺少必需的位置参数 'info_index'。")
+        if info_index > 5:
+            raise IndexError("在调用 SQLiteOperator.get_table_column_info() 时，'info_index' 应在 0~5 的范围内。")
+        table_column_info = {column[1]: column[info_index] for column in self.get_table_info()}
+        return table_column_info
